@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kaniko-build-job
+  namespace: hello-world
+spec:
+  backoffLimit: 4
+  template:
+    metadata:
+      name: kaniko
+    spec:
+      containers:
+      - name: kaniko
+        image: gcr.io/kaniko-project/executor:latest
+        args:
+          - "--dockerfile=/workspace/Dockerfile"                      # Path to your Dockerfile
+          - "--context=git://github.com/<YOUR_GITHUB_USERNAME>/hello-world-api.git#main" # Context (can be Git repo, GCS, etc.)
+          - "--destination=devsp2020/hello-world:latest"        # Destination image
+          - "--cache=true"                                           # Enable caching
+        volumeMounts:
+          - name: kaniko-secret
+            mountPath: /kaniko/.docker
+          - name: workspace
+            mountPath: /workspace
+      restartPolicy: Never
+      volumes:
+        - name: kaniko-secret
+          secret:
+            secretName: regcred     # Docker registry credentials
+        - name: workspace
+          emptyDir: {}
